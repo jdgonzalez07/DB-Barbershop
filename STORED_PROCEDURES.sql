@@ -1,31 +1,38 @@
 DELIMITER $$
+
 CREATE PROCEDURE registrar_reserva(
-IN p_id_cliente INT,
-IN p_id_barbero INT,
-IN p_id_corte INT,
-IN p_id_medio_de_pago INT,
-IN p_fecha DATE,
-IN p_horario TIME,
-IN p_es_espontaneo BOOLEAN
+    IN p_id_cliente INT,
+    IN p_id_barbero INT,
+    IN p_id_corte INT,
+    IN p_id_medio_pago INT,
+    IN p_fecha DATE,
+    IN p_horario TIME,
+    IN p_costo_total DECIMAL(8,2),
+    IN p_es_espontaneo TINYINT
 )
 BEGIN
-DECLARE p_costo_total DECIMAL(8,2);
-
-SELECT precio
-INTO p_costo_total
-FROM corte
-WHERE ID_corte = p_id_corte
-LIMIT 1;
-
-INSERT INTO RESERVA (ID_CLIENTE, ID_BARBERO,ID_CORTE,ID_MEDIO_DE_PAGO,FECHA,HORARIO,COSTO_TOTAL,ES_ESPONTANEO) 
-VALUE (p_id_cliente, p_id_barbero,p_id_corte,p_id_medio_de_pago,p_fecha,p_horario,p_costo_total,p_es_espontaneo);
-
+    -- Verificar si algún parámetro obligatorio es NULL
+    IF p_id_cliente IS NULL OR p_id_barbero IS NULL OR 
+       p_id_corte IS NULL OR p_id_medio_pago IS NULL OR 
+       p_fecha IS NULL OR p_horario IS NULL OR 
+       p_costo_total IS NULL OR p_es_espontaneo IS NULL THEN
+       
+       SIGNAL SQLSTATE '45000'
+       SET MESSAGE_TEXT = 'Error: Ningún campo puede ser NULL';
+    ELSE
+       -- Insertar la reserva si todos los valores son válidos
+       INSERT INTO RESERVA (ID_CLIENTE, ID_BARBERO, ID_CORTE, ID_MEDIO_DE_PAGO, FECHA, HORARIO, COSTO_TOTAL, ES_ESPONTANEO)
+       VALUES (p_id_cliente, p_id_barbero, p_id_corte, p_id_medio_pago, p_fecha, p_horario, p_costo_total, p_es_espontaneo);
+    END IF;
+    
 END$$
-
 
 DELIMITER ;
 
-CALL registrar_reserva(12, 2, 3, 1, '2025-03-15', '10:30:00', FALSE);
+
+DROP PROCEDURE if exists registrar_reserva;
+CALL registrar_reserva(10, 1, 2, 1, '2025-03-01', '10:00:00', 1500.00, 0);
+CALL registrar_reserva(14, 3, 5, 2, '2025-03-28', '10:00:00', 8500.00, 1);
 
 DELIMITER $$
 
